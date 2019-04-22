@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+
+    <!-- autoplay字段很重要，你可以不加这个字段试试，你会发现这个video图像是不会动的，因为它只是一帧 -->
+<video  autoplay  id="myVideo"></video>
+<input type="button" name="" value="开始" id="start">
+<input type="button" name="" value="停止" id="stop">
+<a id="downloadId" download='test.mp4' href=''></a>
+<input id='time' type="text" value="00:00">
+
+
+<script src="https://cdn.webrtc-experiment.com/MediaStreamRecorder.js"> </script>
+    <script type="text/javascript">
+    var video = document.getElementById('myVideo');
+		var start = document.getElementById('start')
+		var stop = document.getElementById('stop')
+		var time = document.getElementById('time')
+
+		var n= 0, timer=null;
+    // 检测浏览器是getUserMedia的方法名，不同浏览器可能有不同的前缀
+    navigator.getUserMedia = navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
+
+    // 判断浏览器是否支持WebRTC
+    if (navigator.getUserMedia) {
+        initVideo();
+    } else {
+        alert('你的浏览器不支持WebRTC');
+    }
+
+    function initVideo(){
+        navigator.getUserMedia({
+            audio: true,
+            video: true
+        }, function(stream){
+            // 将流对象暴露在全局环境，方便打印
+            window.stream = stream;
+            video.srcObject = stream;
+
+						var options = {
+							//audioBitsPerSecond : 128000,
+						//	videoBitsPerSecond : 2500000,
+						//	mimeType : 'video/webm;codecs=h264'
+							mimeType : 'video/webm;codecs=vp9'
+      			}
+				
+						var mediaRecorder = new MediaRecorder(stream)
+				
+						// 开始采集
+						start.onclick = function () {
+							mediaRecorder.start()
+							console.log('开始采集')
+
+							clearInterval(timer);
+							timer=setInterval(function () {
+									n++;
+									var m=parseInt(n/60);
+									var s=parseInt(n%60);
+									time.value=m+":"+s;
+        			},1000/60);
+
+ 						}
+						  // 停止采集
+						stop.onclick = function () {
+								mediaRecorder.stop()
+								clearInterval(timer);
+								  time.value="00:00";
+       						 n=0;
+								console.log('停止采集')
+						}
+				   	mediaRecorder.ondataavailable = function (e) {
+							console.log(e)
+							// 下载视频
+						//	var blob = new Blob([e.data], { 'type' : 'video/webm' })
+							var blob = new Blob([e.data])
+							var a = document.getElementById('downloadId')
+						//	var a = document.createElement('a')
+							a.setAttribute('download', 'cool.webm');// download属性
+							a.setAttribute('href',  URL.createObjectURL(blob));// href链接
+				     // a.click()
+				
+ 					}
+        }, function(error){
+            console.error(error);
+        });
+    }
+
+    </script>
+</body>
+
+</html>
